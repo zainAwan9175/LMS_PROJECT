@@ -1,7 +1,8 @@
 import express from "express"
 export const app=express()
 import cors from "cors";
-import { NextFunction,Request,Response } from "express";
+import { NextFunction,Request,Response } from "express"
+import {errorHandlerMiddleware} from "./middleware/errore"
 
 import cookieParser from "cookie-parser";
 
@@ -35,3 +36,5 @@ app.all("*", (req: Request, res: Response, next: NextFunction) => {
     err.statusCode = 404; // Add a custom property
     next(err); // Pass the error to the error-handling middleware
 });
+
+app.use(errorHandlerMiddleware)

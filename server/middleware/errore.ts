@@ -1,6 +1,6 @@
 import { NextFunction,Request,Response } from "express";
 import ErroreHandler from "../utils/ErroreHandler";
-module.exports =(err:any,req:Request,res:Response,next:NextFunction)=>{
+export const errorHandlerMiddleware =(err:any,req:Request,res:Response,next:NextFunction)=>{
     err.statusCode= err.statusCode||500;
     err.message=err.message|| 'Internal server errore'
     //for wrong mongodb id errore
