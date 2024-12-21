@@ -3,6 +3,7 @@ export const app=express()
 import cors from "cors";
 import { NextFunction,Request,Response } from "express"
 import {errorHandlerMiddleware} from "./middleware/errore"
+import userrouter from "./routes/user-routr"
 
 import cookieParser from "cookie-parser";
 
@@ -28,6 +29,9 @@ app.get("/test",(req:Request,res:Response,next:NextFunction)=>{
         message:"api find successfully"
     })
 })
+
+
+app.use("/user",userrouter);
 
 
 
