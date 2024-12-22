@@ -1,11 +1,14 @@
 import express from "express"
 export const app=express()
+
 import cors from "cors";
 import { NextFunction,Request,Response } from "express"
 import {errorHandlerMiddleware} from "./middleware/errore"
 import userrouter from "./routes/user-routr"
 
 import cookieParser from "cookie-parser";
+import bodyParser from 'body-parser';
+app.use(bodyParser.json());
 
 
 
