@@ -3,12 +3,14 @@ import userModel from "../Models/user.model";
 import ErroreHandler from "../utils/ErroreHandler";
 import { CatchAsyncErrore } from "../middleware/catchAsyncErrors";
 import { IUser } from "../Models/user.model";
-import jwt, { Secret } from "jsonwebtoken"
+import jwt, {JwtPayload, Secret } from "jsonwebtoken"
 import dotenv from "dotenv"
 import ejs from "ejs"
 import path from "path";
 import sendMailer from "../utils/sendMail";
-import { sendToken } from "../utils/JWT";
+import { accessTokenOption, refreshTokenOption, sendToken } from "../utils/JWT";
+import { redis } from "../utils/redis";
+
 dotenv.config();
 interface IRegisterionBody{
     
@@ -155,7 +157,7 @@ export const loginUser=CatchAsyncErrore(
                     return next(new ErroreHandler("Please enter email and password",400))
                 }
 
-                const user=await userModel.findOne({email}).select("+password");
+                const user=await userModel.findOne({email}).select("+password") as IUser;
                 if(!user)
                 {
                     return next(new ErroreHandler("Please enter correct  email and password !",400))
@@ -176,25 +178,68 @@ export const loginUser=CatchAsyncErrore(
 )
 
 
+// Logout User
+export const logoutUser = CatchAsyncErrore(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // Clear cookies
+      res.cookie("access_token", "", { maxAge: 1 });
+      res.cookie("refresh_token", "", { maxAge: 1 });
 
-//logout user
-export const logoutUser=CatchAsyncErrore(
-    async (req:Request,res:Response,next:NextFunction)=>{
+      // Retrieve and ensure the user ID is a string
+      const userId = req.user?._id?.toString();
+      if (!userId) {
+        return next(new ErroreHandler("User ID is missing", 400));
+      }
+
+      // Remove the user data from Redis
+      await redis.del(userId);
+
+      res.status(200).json({
+        success: true,
+        message: "Logged out successfully",
+      });
+    } catch (err: any) {
+      return next(new ErroreHandler(err.message, 400));
+    }
+  }
+);
+
+
+
+
+//update access token
+import { ObjectId } from "mongodb";
+
+export const updateAccessToken=CatchAsyncErrore(
+    async(req:Request,res:Response, next:NextFunction)=>{
+
         try{
-            res.cookie('access_token',"",{maxAge:1});
-            res.cookie("refresh_token","",{maxAge:1})
-            res.status(200).json({
-                success:true,
-                message:"Lgged out successfylly"
-             
-            })
+            const refreshToken=req.cookies.refresh_token as string;
+            const decoded=jwt.verify(refreshToken,process.env.REFRESH_TOKEN as string) as JwtPayload
 
 
+            if(!decoded)
+            {
+                return next(new ErroreHandler("Could not refresh token",400))
+            }
+        
+            const session=await redis.get(decoded.id)
+            if(!session){
+                return next(new ErroreHandler("Could not refresh token",400))
+
+            }
+
+            const user=JSON.parse(session)
+            const accessToken=jwt.sign({id:user._id},process.env.ACCESS_TOKEN as string,{expiresIn:"5m"})
+            const refreshtoken=jwt.sign({id:user._id},process.env.REFRESH_TOKEN as string,{expiresIn:"5d"})
+            res.cookie('access_token', accessToken, accessTokenOption);
+            res.cookie('refresh_token', refreshtoken, refreshTokenOption);
         }
         catch(err:any)
         {
             return next(new ErroreHandler(err.message,400))
         }
-
-    }
+    
+}
 )
