@@ -5,6 +5,7 @@ import cors from "cors";
 import { NextFunction,Request,Response } from "express"
 import {errorHandlerMiddleware} from "./middleware/errore"
 import userrouter from "./routes/user-routr"
+import courseRouter from "./routes/course-route";
 
 import cookieParser from "cookie-parser";
 import bodyParser from 'body-parser';
@@ -35,7 +36,7 @@ app.get("/test",(req:Request,res:Response,next:NextFunction)=>{
 
 
 app.use("/user",userrouter);
-
+app.use("/course",courseRouter);
 
 
 app.all("*", (req: Request, res: Response, next: NextFunction) => {

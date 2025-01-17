@@ -14,5 +14,5 @@ export const getUserById=async(id:string,res:Response)=>{
             user
         })
     }
-    
+    0
 }
