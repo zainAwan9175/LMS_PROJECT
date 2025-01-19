@@ -4,6 +4,17 @@ import ErroreHandler from "../utils/ErroreHandler";
 import cloudinary from "cloudinary"
 import { createCourse } from "../services/course.service";
 import CourseModel from "../Models/course.model";
+import { redis } from "../utils/redis";
+import { json } from "stream/consumers";
+import userModel from "../Models/user.model";
+import mongoose from "mongoose";
+
+
+import { title } from "process";
+import ejs from "ejs"
+import path from "path";
+import sendMailer from "../utils/sendMail";
+
 export const uploadCourse=CatchAsyncErrore(async(req:Request,res:Response,next:NextFunction)=>{
     try{
         const data=req.body;
@@ -76,7 +87,43 @@ export const editCourse = CatchAsyncErrore(async (req: Request, res: Response, n
         success:true,
         course
       })
+await redis.set(req.params.id,JSON.stringify(course))
 
+    }
+
+    catch(error:any)
+    {
+      return next(new ErroreHandler(error.message, 500));
+    }
+  })
+
+
+
+  //get  all course without purchasing
+
+
+  export const getAllCourses=CatchAsyncErrore(async(req:Request,res:Response,next:NextFunction)=>{
+    try{
+      const isCashExist=await redis.get("allCourses");
+      if(isCashExist)
+      {
+        const courses=JSON.parse(isCashExist );
+        console.log("hitting redis")
+        res.status(200).json({
+          success:true,
+          courses
+        })
+        }
+        else{
+          const courses=await CourseModel.find().select("-courseData.videoUrl -courseData.suggestion -courseData.question -courseData.links")
+
+          await redis.set("allCourses",JSON.stringify(courses))
+          console.log("hitting mongodb")
+          res.status(200).json({
+            success:true,
+            courses
+          })
+        }
 
     }
     catch(error:any)
@@ -84,4 +131,170 @@ export const editCourse = CatchAsyncErrore(async (req: Request, res: Response, n
       return next(new ErroreHandler(error.message, 500));
     }
   })
+
+  // get course only for valid users
+
+  export const getCourseByUser = CatchAsyncErrore(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const courseId = req.params.id;
+      const userCourseList = req.user?.courses;
+ 
+  
+      const isCourseExist = userCourseList?.find((course: any) => {
+        return course._id.toString() === courseId; // Correct method: toString()
+      });
+  
+      if (!isCourseExist) {
+        return next(new ErroreHandler("You are not eligible to access this course", 404));
+      }
+  
+      const course = await CourseModel.findById(courseId);
+      const content = course?.courseData;
+  
+      res.status(200).json({
+        success: true,
+        content,
+      });
+    } catch (error: any) {
+      return next(new ErroreHandler(error.message, 500));
+    }
+  });
+
+
+
+  //add question in course
+
+  interface IAddQuestionData{
+    question:string;
+    courseId:string;
+    contentId:string;
+  }
+  
+
+  export const addQuestion=CatchAsyncErrore(async(req:Request,res:Response,next:NextFunction)=>{
+
+    try{
+
+      const {question,courseId,contentId}=req.body as IAddQuestionData;
+      const course=await CourseModel.findById(courseId);
+      if(!mongoose.Types.ObjectId.isValid(contentId))
+      {
+        return next(new ErroreHandler("Invalid content Id", 400));
+      }
+
+      const content=course?.courseData.find((item:any)=>{
+       return item._id.equals(contentId);
+      })
+    
+
+      if(!content)
+      {return next(new ErroreHandler("Invalid content Id", 400));
+      }
+
+      const newQuestion:any={
+        user:req.user,
+        question,
+        questionReplies:[]
+      }
+   content.question.push(newQuestion);
+
+   await course?.save();
+   res.status(200).json({
+    success: true,
+    course,
+  });
+
+    }
+    catch (error: any) {
+      return next(new ErroreHandler(error.message, 500));
+    }
+
+  })
+
+
+  // add  answers in the questions 
+
+  interface IaddAnswer{
+    answer:string;
+    courseId:string;
+    contentId:string;
+    questionId:string;
+    
+  }
+  export const addAnswers = CatchAsyncErrore(
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const { answer, courseId, contentId, questionId } = req.body as IaddAnswer;
+  
+        console.log(req.body);
+  
+        const course = await CourseModel.findById(courseId);
+        if (!mongoose.Types.ObjectId.isValid(contentId)) {
+          return next(new ErroreHandler("Invalid content Id", 400));
+        }
+  
+        const content = course?.courseData.find((item: any) =>
+          item._id.equals(contentId)
+        );
+  
+        if (!content) {
+          return next(new ErroreHandler("Invalid content Id", 400));
+        }
+  
+        const question = content.question.find((item: any) =>
+          item._id.equals(questionId)
+        );
+        if (!question) {
+          return next(new ErroreHandler("Invalid QUESTION Id", 400));
+        }
+  
+        const newAnswers: any = {
+          user: req.user,
+          answer,
+        };
+  
+        question.questionReplies?.push(newAnswers);
+        await course?.save();
+  
+        if (req.user?._id===question.user._id) {
+          // Do nothing for self-reply
+        } else {
+          const data = {
+            name: question.user?.name || "User",
+            title: content?.title || "your question",
+          };
+  
+          console.log("Data passed to EJS:", data);
+  
+          // Validate data
+          if (!data.name || !data.title) {
+            return next(new ErroreHandler("Data is missing required fields", 400));
+          }
+  
+          const html = await ejs.renderFile(
+            path.join(__dirname, "../mail/question-reply.ejs"),
+            data 
+          );
+  
+          try {
+            await sendMailer({
+              email: question.user.email,
+              subject: "Question Reply",
+              templete: "question-reply.ejs",
+              data,
+            });
+          } catch (error: any) {
+            return next(new ErroreHandler(error.message, 400));
+          }
+        }
+  
+        res.status(200).json({
+          success: true,
+          course,
+        });
+      } catch (error: any) {
+        return next(new ErroreHandler(error.message, 500));
+      }
+    }
+  );
   
