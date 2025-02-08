@@ -7,7 +7,7 @@ interface IComment extends Document{
 }
 
 interface IReview extends Document{
-    user:object,
+    user:IUser,
     rating:number,
     comment:string,
     commnetRepice:IComment[]
@@ -143,6 +143,9 @@ const courseSchema=new Schema<ICourse>({
         type:Number,
         default:0,
     },
+    reviews:[reviewSchema]
+
+
 
 
 })

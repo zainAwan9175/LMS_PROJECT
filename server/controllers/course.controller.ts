@@ -108,7 +108,7 @@ await redis.set(req.params.id,JSON.stringify(course))
       if(isCashExist)
       {
         const courses=JSON.parse(isCashExist );
-        console.log("hitting redis")
+     
         res.status(200).json({
           success:true,
           courses
@@ -226,7 +226,7 @@ await redis.set(req.params.id,JSON.stringify(course))
       try {
         const { answer, courseId, contentId, questionId } = req.body as IaddAnswer;
   
-        console.log(req.body);
+
   
         const course = await CourseModel.findById(courseId);
         if (!mongoose.Types.ObjectId.isValid(contentId)) {
@@ -264,7 +264,6 @@ await redis.set(req.params.id,JSON.stringify(course))
             title: content?.title || "your question",
           };
   
-          console.log("Data passed to EJS:", data);
   
           // Validate data
           if (!data.name || !data.title) {
@@ -298,3 +297,76 @@ await redis.set(req.params.id,JSON.stringify(course))
     }
   );
   
+
+
+  //add reviews;
+
+  interface IaddReview{
+
+    rating:Number,
+    review:string,
+
+    }
+
+
+  export const addReview=CatchAsyncErrore(async(req:Request,res:Response,next:NextFunction)=>{
+
+    try{
+      const courseId = req.params.id;
+      const userCourseList = req.user?.courses;
+      console.log(req.body)
+
+ 
+  
+      const isCourseExist = userCourseList?.find((course: any) => {
+        return course._id.toString() === courseId; // Correct method: toString()
+      });
+  
+      if (!isCourseExist) {
+        return next(new ErroreHandler("You are not eligible to access this course", 404));
+      }
+  
+
+      const course =await CourseModel.findById(courseId) ;
+      const {rating,review}=req.body as IaddReview;
+      const newReview:any={
+        user:req.user,
+        rating,
+        comment:review,
+
+      }
+
+      course?.reviews.push(newReview);
+      let sum=0;
+      course?.reviews.forEach((rev:any)=>{
+        sum=sum+rev.rating;
+      })
+
+      if(course)
+      {
+        course.rating=sum/course.reviews.length;   //rating of the course is the avg rating ;
+      }
+
+await course?.save();
+
+
+const notification={
+  title: "New Review Received",
+  message : `${req.user ?.name} has given a review in ${course?.name}`
+}
+
+//create the notification.
+res.status(200).json({
+  success:true,
+  course,
+})
+      
+
+
+    }
+    catch(err:any)
+    {
+      return next(new ErroreHandler(err.message,500))
+    }
+
+  })
