@@ -39,6 +39,7 @@ export const authorizeRole=(...role:string[])=>{
     return (req:Request,res:Response,next:NextFunction)=>{
         if(!role.includes(req.user?.role||''))
         {
+          
             return next(new ErroreHandler(`Role : ${req.user?.role} is not allowed to access this resourse`,403))
         }
         next();

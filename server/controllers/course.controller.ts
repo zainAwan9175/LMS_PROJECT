@@ -370,3 +370,60 @@ res.status(200).json({
     }
 
   })
+
+
+
+  //add reply in review
+  
+
+
+  interface IAddReplyToReview
+{
+  courseId:string,
+  reviewId:string,
+  comment:string,
+
+}
+
+export const addReplyToReview=CatchAsyncErrore(async(req:Request,res:Response,next:NextFunction)=>{
+  
+
+  try{
+
+    const {courseId,reviewId,comment} =req.body as IAddReplyToReview;
+
+    const course= await CourseModel.findById(courseId) 
+    if(!course)
+    {
+        return next(new ErroreHandler("Course not found",400))
+
+    }
+
+    const isReviewExist=course.reviews.find((rev:any)=>{
+      return rev._id.toString()===reviewId;
+    })
+
+
+    if(!isReviewExist)
+  {
+    return next(new ErroreHandler("Review not found",400))
+  }
+ const replyData:any={
+  user:req.user,
+  questioin:comment,
+ }
+
+isReviewExist.commnetRepice?.push(replyData);
+await course.save();
+
+res.status(200).json({
+  success: true,
+  course,
+});
+
+}
+  catch(error:any)
+  {
+    return next(new ErroreHandler(error.message,500))
+  }
+})

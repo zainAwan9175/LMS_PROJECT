@@ -49,14 +49,6 @@ interface ICourse extends Document{
     purchased?:number;
 }
 
-const reviewSchema=new Schema<IReview>({
-    user:Object,
-    rating:{
-        type:Number,
-        default:0
-    },
-    comment:String,
-})
 
 const linkSchema=new Schema<ILink>({
     title:String,
@@ -67,6 +59,15 @@ const commentSchema=new Schema <IComment>({
     user:Object,
     question:String,
     questionReplies:[Object],
+})
+const reviewSchema=new Schema<IReview>({
+    user:Object,
+    rating:{
+        type:Number,
+        default:0
+    },
+    comment:String,
+    commnetRepice:[commentSchema]
 })
 
 
