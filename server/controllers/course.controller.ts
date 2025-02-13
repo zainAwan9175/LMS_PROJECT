@@ -8,7 +8,7 @@ import { redis } from "../utils/redis";
 import { json } from "stream/consumers";
 import userModel from "../Models/user.model";
 import mongoose from "mongoose";
-
+import notificationModel from "../Models/niootificationModel";
 
 import { title } from "process";
 import ejs from "ejs"
@@ -198,6 +198,12 @@ await redis.set(req.params.id,JSON.stringify(course))
       }
    content.question.push(newQuestion);
 
+   await notificationModel.create({
+    user:req.user?._id,
+    title:'New Question Recieve',
+    message:`You have a new Question from ${content?.title}`
+})
+
    await course?.save();
    res.status(200).json({
     success: true,
@@ -257,7 +263,11 @@ await redis.set(req.params.id,JSON.stringify(course))
         await course?.save();
   
         if (req.user?._id===question.user._id) {
-          // Do nothing for self-reply
+          await notificationModel.create({
+            user:req.user?._id,
+            title:'New Question Reply Recieve',
+            message:`You have a new Question reply in ${content?.title}`
+        })
         } else {
           const data = {
             name: question.user?.name || "User",

@@ -7,6 +7,7 @@ import {errorHandlerMiddleware} from "./middleware/errore"
 import userrouter from "./routes/user-routr"
 import courseRouter from "./routes/course-route";
 import orderrouter from "./routes/order-route";
+import notificationRoute from "./routes/notification.route";
 import cookieParser from "cookie-parser";
 import bodyParser from 'body-parser';
 app.use(bodyParser.json());
@@ -38,6 +39,7 @@ app.get("/test",(req:Request,res:Response,next:NextFunction)=>{
 app.use("/user",userrouter);
 app.use("/course",courseRouter);
 app.use("/order",orderrouter)
+app.use("/notification",notificationRoute)
 
 
 app.all("*", (req: Request, res: Response, next: NextFunction) => {
