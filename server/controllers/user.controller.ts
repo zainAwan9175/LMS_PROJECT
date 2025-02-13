@@ -10,7 +10,7 @@ import path from "path";
 import sendMailer from "../utils/sendMail";
 import { accessTokenOption, refreshTokenOption, sendToken } from "../utils/JWT";
 import { redis } from "../utils/redis";
-import { getUserById } from "../services/user.service";
+import { getUserById,getAllUsersService } from "../services/user.service";
 import cloudinary from "cloudinary";
 dotenv.config();
 interface IRegisterionBody{
@@ -452,3 +452,18 @@ export const updateProfilePicture = CatchAsyncErrore(
         }
     }
 );
+
+
+
+// get all users --- only for admin
+
+export const getAllUsers=CatchAsyncErrore(async(req:Request,res:Response,next:NextFunction)=>{
+    try{
+        getAllUsersService(res)
+
+    }
+    catch(err:any)
+    {
+        return next(new ErroreHandler(err.message, 400));
+    }
+})

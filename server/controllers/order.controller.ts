@@ -10,7 +10,7 @@ import sendMailer from "../utils/sendMail";
 
 import { CatchAsyncErrore } from "../middleware/catchAsyncErrors";
 import userModel, { IUser } from "../Models/user.model";
-import { newOrder } from "../services/order.service";
+import { newOrder,getAllOrdersService } from "../services/order.service";
 import path from "path";
 
 
@@ -81,3 +81,15 @@ newOrder(data,res,next);
     }
 
 })
+
+// get all orders --- for admin
+export const getAllOrders=CatchAsyncErrore(async(req:Request,res:Response,next:NextFunction)=>{
+    try{
+        getAllOrdersService(res)
+  
+    }
+    catch(err:any)
+    {
+        return next(new ErroreHandler(err.message, 400));
+    }
+  })

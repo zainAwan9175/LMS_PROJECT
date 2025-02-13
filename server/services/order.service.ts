@@ -14,3 +14,13 @@ export const newOrder=CatchAsyncErrore(async(data:any,res:Response)=>{
     })
     
 })
+
+
+
+export const getAllOrdersService=async(res:Response)=>{
+    const users=await orderModel.find().sort({createdAt:-1});
+    res.status(201).json({
+        success:true,
+        users
+    })
+}
