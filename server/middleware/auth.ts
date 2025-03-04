@@ -18,13 +18,13 @@ export const isAuthenticated=CatchAsyncErrore(async(req:Request,res:Response,nex
     const decoded=jwt.verify(access_token,process.env.ACCESS_TOKEN as string) as JwtPayload
     if(!decoded)
     {
-        return next(new ErroreHandler("access token os not valid",400));
+        return next(new ErroreHandler("access token is not valid",400));
     } 
 
     const user= await redis.get(decoded.id);
     if(!user)
     {
-        return next(new ErroreHandler("user not find",400));
+        return next(new ErroreHandler("Please login to access this resourse",400));
     }
     req.user = JSON.parse(user);
     next();

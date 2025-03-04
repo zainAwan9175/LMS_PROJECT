@@ -149,6 +149,6 @@ const courseSchema=new Schema<ICourse>({
 
 
 
-})
+},{timestamps:true})
 const CourseModel: Model<ICourse>=mongoose.model("course",courseSchema);
 export default CourseModel;

@@ -87,7 +87,7 @@ export const editCourse = CatchAsyncErrore(async (req: Request, res: Response, n
         success:true,
         course
       })
-await redis.set(req.params.id,JSON.stringify(course))
+await redis.set(req.params.id,JSON.stringify(course),"EX",604800)
 
     }
 

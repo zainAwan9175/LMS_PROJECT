@@ -211,6 +211,7 @@ export const logoutUser = CatchAsyncErrore(
 
 //update access token
 import { ObjectId } from "mongodb";
+import { json } from "stream/consumers";
 
 export const updateAccessToken=CatchAsyncErrore(
     async(req:Request,res:Response, next:NextFunction)=>{
@@ -227,7 +228,7 @@ export const updateAccessToken=CatchAsyncErrore(
         
             const session=await redis.get(decoded.id)
             if(!session){
-                return next(new ErroreHandler("Could not refresh token",400))
+                return next(new ErroreHandler("PLZ login to access this ",400))
 
             }
 
@@ -237,6 +238,7 @@ export const updateAccessToken=CatchAsyncErrore(
             req.user=user;
             res.cookie('access_token', accessToken, accessTokenOption);
             res.cookie('refresh_token', refreshtoken, refreshTokenOption);
+            await redis.set(user._id,JSON.stringify(user),"EX",604800)
             res.status(200).json({
                 status:"success",
                 accessToken

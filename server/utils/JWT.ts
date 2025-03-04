@@ -15,7 +15,7 @@ interface ITokenOption {
 
 
 export const accessTokenExpire = parseInt(process.env.ACCESS_TOKEN_EXPIRE || '300', 10);
-   export const refreshTokenExpire = parseInt(process.env.REFRESH_TOKEN_EXPIRE || '1200', 10);
+export const refreshTokenExpire = parseInt(process.env.REFRESH_TOKEN_EXPIRE || '1200', 10);
 
     // Options for cookies
   export  const accessTokenOption: ITokenOption = {
