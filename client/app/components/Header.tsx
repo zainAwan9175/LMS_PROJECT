@@ -7,13 +7,17 @@ import { HiOutlineMenuAlt3, HiOutlineUserCircle } from "react-icons/hi";
  import CustomModal from "../utils/CustomModal";
  import Login from "./Auth/Login";
 import SignUp from "./Auth/SignUp";
+import ForgetPassword from "./Auth/ForgetPassword";
 import Verification from "./Auth/Verification";
-// import Verification from "./Auth/Verification";
-// import { useSelector } from "react-redux";
+import Forgetpasswordotp from "./Auth/forgetpasswordotp";
+import { signOut } from "next-auth/react";
+
+ import { useSelector } from "react-redux";
 import Image from "next/image";
 import avatar from "../../public/assests/avatardefault.jpeg";
-
+import { useSocialAuthMutation } from "@/redux/features/auth/authApi";
 import { useSession } from "next-auth/react";
+import { useLogOutQuery } from "@/redux/features/auth/authApi";
 // import {
 //   useLogOutQuery,
 //   useSocialAuthMutation,
@@ -38,22 +42,30 @@ const Header: FC<HeaderProps> = ({
 }) => {
   const [active, setActive] = useState(false);
   const [openSidebar, setOpenSidebar] = useState(false);
+  //  const [logout, setLogOut] = useState(false);
+const {user}=useSelector((state:any)=>state.auth)
+// const{}=useLogOutQuery(undefined,{skip: !logout})
 
 
-
-
-  // const { data } = useSession();
+  const { data } = useSession();
+  console.log(data)
   // const {
   //   data: userData,
   //   isLoading,
   //   refetch,
   // } = useLoadUserQuery(undefined, {});
 
+    // const logOutHandler = async () => {
+    //   setLogOut(true);
+    // //  await signOut();
+    // };
+  
 
 
 
 
-  // const [socialAuth, { isSuccess, error }] = useSocialAuthMutation();
+
+   const [socialAuth, { isSuccess, error }] = useSocialAuthMutation();
   // const [logout, setLogOut] = useState(false);
   // const {} = useLogOutQuery(undefined, { skip: !logout ? true : false });
 
@@ -63,36 +75,50 @@ const Header: FC<HeaderProps> = ({
 
   
 
-  // useEffect(() => {
-  //   if (!isLoading) {
-  //     if (!userData) {
-  //       if (data) {
-  //         socialAuth({
-  //           email: data?.user?.email,
-  //           name: data?.user?.name,
-  //           avatar: data.user?.image,
-  //         });
-  //         refetch();
-  //       }
-  //     }
+  useEffect(() => {
+    // if (!isLoading) {
+  
 
-  //     if (error) {
-  //       if ("data" in error) {
-  //         const errorData = error as any;
-  //         toast.error(errorData.data.message);
-  //       }
-  //     }
+    //   if (error) {
+    //     if ("data" in error) {
+    //       const errorData = error as any;
+    //       toast.error(errorData.data.message);
+    //     }
+    //   }
 
-  //     if (data === null) {
-  //       if (isSuccess) {
-  //         toast.success("Login Successfully");
-  //       }
-  //     }
-  //     if (data === null && !isLoading && !userData) {
-  //       setLogOut(true);
-  //     }
-  //   }
-  // }, [data, isSuccess, isLoading, userData, error, socialAuth, refetch]);
+    //   if (data === null) {
+    //     if (isSuccess) {
+    //       toast.success("Login Successfully");
+    //     }
+    //   }
+    //   if (data === null && !isLoading && !userData) {
+    //     setLogOut(true);
+    //   }
+    // }
+    //    refetch();
+    if (!user) {
+      if (data) {
+        socialAuth({
+          email: data?.user?.email as string,
+          name: data?.user?.name as string,
+          socialimage: data.user?.image as string,
+        });
+    
+      }
+      if(isSuccess)
+        {
+          toast.success("login successfully")
+        }
+      // if(data===null)
+      // {
+       
+      // }
+      // if(data===null)
+      // {
+      //   logOutHandler ()
+      // }
+    }
+  }, [data, isSuccess, error, socialAuth]);
 
   if (typeof window !== "undefined") {
     window.addEventListener("scroll", () => {
@@ -144,12 +170,12 @@ const Header: FC<HeaderProps> = ({
                       onClick={() => setOpenSidebar(true)}
                     />
                   </div>
-                  {/* {userData ? (
+                  {user ? (
                     <Link href={"/profile"}>
                       <Image
                         src={
-                          userData?.user.avatar
-                            ? userData.user.avatar.url
+                          user.avatar
+                            ? user.avatar.url
                             : avatar
                         }
                         alt=""
@@ -168,12 +194,8 @@ const Header: FC<HeaderProps> = ({
                       className="hidden 800px:block cursor-pointer dark:text-white text-black"
                       onClick={() => setOpen(true)}
                     />
-                  )} */}
-                  <HiOutlineUserCircle
-                      size={25}
-                      className="hidden 800px:block cursor-pointer dark:text-white text-black"
-                      onClick={() => setOpen(true)}
-                    />
+                  )}
+                
                 </div>
               </div>
             </div>
@@ -229,7 +251,7 @@ const Header: FC<HeaderProps> = ({
           </div>
 
 
-     {/* refetch={refetch} */}
+
           
           {route === "Login" && (
             <>
@@ -240,13 +262,14 @@ const Header: FC<HeaderProps> = ({
                   setRoute={setRoute}
                   activeItem={activeItem}
                   component={Login}
+
              
                 />
               )}
             </>
           )}
 
-
+{/* refetch={refetch} */}
 
 
 
@@ -266,7 +289,35 @@ const Header: FC<HeaderProps> = ({
           )}
 
 
- 
+{route === "Forget" && (
+            <>
+              {open && (
+                <CustomModal
+                  open={open}
+                  setOpen={setOpen}
+                  setRoute={setRoute}
+                  activeItem={activeItem}
+                  component={ForgetPassword}
+
+             
+                />
+              )}
+            </>
+          )}
+
+{route === "forgetpasswordotp" && (
+            <>
+              {open && (
+                <CustomModal
+                  open={open}
+                  setOpen={setOpen}
+                  setRoute={setRoute}
+                  activeItem={activeItem}
+                  component={Forgetpasswordotp}
+                />
+              )}
+            </>
+          )} 
 
 
 

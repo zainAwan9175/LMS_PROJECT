@@ -54,7 +54,8 @@ export const registrationUser = CatchAsyncErrore(async (req: Request, res: Respo
             res.status(201).json({
                 success: true,
                 message: `Please check your email: ${user.email} to activate your account!`,
-                activationToken: token,  // Send only the token
+                activationToken: token, 
+                user 
             });
 
         } catch (err: any) {
@@ -73,7 +74,9 @@ interface Activecodetoken{
 
 
 export const createActivationToken =(user:any):Activecodetoken=>{
-    const activecode=Math.floor(Math.random()*9000+1000).toString()
+    // const activecode=Math.floor(Math.random()*9000+1000).toString()
+    const activecode = Math.floor(100000 + Math.random() * 900000).toString();
+
     const token = jwt.sign(
         { user, activecode },
         process.env.JWTKEY as Secret,
@@ -104,6 +107,7 @@ export const activateUser=CatchAsyncErrore(async(req:Request,res:Response,next:N
         }
 
         const{activation_token,activation_code}=req.body;
+  
 
 
         const newUser:{user:IUser;activecode:string}=jwt.verify(
@@ -184,6 +188,7 @@ export const logoutUser = CatchAsyncErrore(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       // Clear cookies
+   
       res.cookie("access_token", "", { maxAge: 1 });
       res.cookie("refresh_token", "", { maxAge: 1 });
 
@@ -277,81 +282,118 @@ export const getUserInfo=CatchAsyncErrore(async(req:Request,res:Response,next:Ne
 interface IsocialAuthBody{
     email:string,
     name:string,
-    avatar:string,
+    socialimage:string,
 }
 
 
 // social auth  
+export const socialAuth = CatchAsyncErrore(
+    async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const { email, name, socialimage } = req.body as IsocialAuthBody;
+            console.log("avatar");
+            console.log(req.body);
 
-export const socialAuth=CatchAsyncErrore(
-    async(req:Request,res:Response,next:NextFunction)=>{
-        try{
-            const {name,email,avatar}=req.body as IsocialAuthBody ;
-            const user=await userModel.findOne({email})
-            if(!user)
-            {
-                const  newUser=await userModel.create({email,name,avatar})
-                sendToken(newUser,res,200)
-            }
-            else{
-                sendToken(user,res,200)
+            let user = await userModel.findOne({ email });
+
+            // Upload image from URL to Cloudinary
+            const myCloud = await cloudinary.v2.uploader.upload(socialimage, {
+                folder: "avatar",
+                width: 150,
+                crop: "scale",
+            });
+
+            if (!user) {
+                // Create new user and store the Cloudinary image
+                user = await userModel.create({
+                    email,
+                    name,
+                    avatar: {
+                        public_id: myCloud.public_id,
+                        url: myCloud.secure_url,
+                    },
+                });
+            } else {
+                // Check if the user already has an avatar
+                if (user.avatar && user.avatar.public_id) {
+                    // Delete the old image from Cloudinary
+                    await cloudinary.v2.uploader.destroy(user.avatar.public_id);
+                }
+
+                // Update existing user's avatar
+                user.avatar = {
+                    public_id: myCloud.public_id,
+                    url: myCloud.secure_url,
+                };
+                await user.save();
             }
 
-        }
-        catch(err:any)
-        {
-            return next(new ErroreHandler(err.message,400))
+            sendToken(user, res, 200);
+        } catch (err: any) {
+            return next(new ErroreHandler(err.message, 400));
         }
     }
-)
+);
+
 
 
 
 //update user info
 
 
-interface IUpdateUserInfo{
-    name:string,
-    email:string,
-
+interface IUpdateUserInfo {
+    name: string;
+    email: string; // Keeping it in the interface but NOT allowing updates
 }
 
-export const updateUserInfo=CatchAsyncErrore(
-    async (req:Request,res:Response,next:NextFunction)=>{
-        try{
-            const {name,email}=req.body as IRegisterionBody;
-            const userId=req.user?._id as string;
-           
-            const  user=await userModel.findById(userId);
-            if(user &&email)
-            {
-                const isEmailExist=await userModel.findOne({email});
-                if(isEmailExist)
-                {
-                    return next(new ErroreHandler("Email is already exist",400))
-                }
-                user.email=email;
+export const updateUserInfo = CatchAsyncErrore(
+    async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const { name, email } = req.body as IUpdateUserInfo;
+            console.log("Received Data:", req.body);
+
+            const userId = req.user?._id as string;
+            console.log("User ID:", userId);
+
+            if (!userId) {
+                return next(new ErroreHandler("User not authenticated", 401));
             }
 
-            if(name&& user)
-            {
-                user.name=name;
+            const user = await userModel.findById(userId);
+            if (!user) {
+                return next(new ErroreHandler("User not found", 404));
             }
-            await user?.save();
-            redis.set(userId,JSON.stringify(user))
-res.status(201).json({
-    success:true,
-    user
-})
 
+            // ❌ Restrict email updates
+            if (email && email !== user.email) {
+                return next(new ErroreHandler("Email cannot be changed", 400));
+            }
 
-        }
-        catch(err:any)
-        {
-            return next(new ErroreHandler(err.message,400))
+            // ✅ Only update name if provided
+            if (name) {
+                user.name = name;
+                await user.save();
+
+                // ✅ Update user data in Redis
+                await redis.set(userId, JSON.stringify(user)).catch((err) => {
+                    console.error("Redis Error:", err);
+                });
+
+                return res.status(200).json({
+                    success: true,
+                    message: "User name updated successfully",
+                    user,
+                });
+            } else {
+                return next(new ErroreHandler("Name field is required", 400));
+            }
+        } catch (error) {
+            console.error("Update Profile Error:", error);
+            next(error);
         }
     }
-)
+);
+
 
 
 
@@ -370,6 +412,7 @@ export const  updatePassword=CatchAsyncErrore(
 
         try{
             const {oldPassword,newPassword}=req.body as IUpdatePassword;
+            console.log(req.body)
             if(!oldPassword||!newPassword)
             {
                 return next(new ErroreHandler("Please enter old and new password",400))
@@ -509,3 +552,151 @@ export const deleteUser= CatchAsyncErrore(async(req:Request,res:Response,next:Ne
         return next(new ErroreHandler(err.message, 400));   
     }
 })
+
+
+
+
+
+  
+interface IResetpassword {
+    name: string;
+    email: string;
+  }
+  
+  export const forgetpassword = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { email, name } = req.body;
+  
+      // Check if email exists in the database
+      const isEmailExist = await userModel.findOne({ email });
+      if (!isEmailExist) {
+        return next(new ErroreHandler("Please enter a valid email", 400));
+      }
+  
+      const user: IResetpassword = {
+        name,
+        email,
+      };
+  
+      // Create activation token
+      const { token, activecode } = createForgetPasswordToken(user);
+  
+      // Prepare data for email
+      const data = { user: { name: user.name }, activationCode: activecode };
+  
+      // Render email HTML using EJS
+      const html = await ejs.renderFile(path.join(__dirname, "../mail/passwordreset-mailer.ejs"), data);
+  
+      // Send email
+      try {
+        await sendMailer({
+          email,
+          subject: "Reset your Password",
+          templete : "passwordreset-mailer.ejs", // Adjust to the actual mailer utility
+          data,
+        });
+  
+        res.status(201).json({
+          success: true,
+          message: `Please check your email: ${email} to reset your password!`,
+          activationToken: token,
+          user,
+        });
+      } catch (err: any) {
+        return next(new ErroreHandler(err.message, 400));
+      }
+    } catch (error: any) {
+      return next(new ErroreHandler(error.message, 400));
+    }
+  };
+  
+  interface ForgetPasswordToken {
+    token: string;
+    activecode: string;
+  }
+  
+  export const createForgetPasswordToken = (user: IResetpassword): ForgetPasswordToken => {
+    const activecode = Math.floor(Math.random() * 9000 + 1000).toString();
+    const token = jwt.sign(
+      { user, activecode },
+      process.env.JWTKEY as Secret,
+      { expiresIn: "5m" } // Token will expire after 5 minutes
+    );
+  
+    return { token, activecode };
+  };
+  
+  export const checkResetPasswordOtp = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { activation_token, activation_code } = req.body;
+  
+      // Verify token
+      const decode = jwt.verify(activation_token, process.env.JWTKEY as Secret) as {
+        user: IResetpassword;
+        activecode: string;
+      };
+     
+  
+      // Check activation code
+      if (decode.activecode !== activation_code) {
+        return next(new ErroreHandler("Invalid reset password code", 400));
+      }
+  
+
+      res.status(201).json({
+        success: true,
+        message: "Your OTP verify  successfully",
+      });
+    } catch (err: any) {
+      return next(new ErroreHandler(err.message, 400));
+    }
+  };
+  
+
+
+
+
+// Interface for password reset
+interface IResetpassword {
+  name: string;
+  email: string;
+}
+
+export const resetPassword = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { activation_token, newpassword } = req.body; // Getting the activation token and new password from the request body
+
+    // Verify the token
+    const decoded = jwt.verify(activation_token, process.env.JWTKEY as Secret) as {
+      user: IResetpassword;
+      activecode: string;
+    };
+
+    // Retrieve the email from the decoded token
+    const email = decoded.user.email;
+
+    // Check if the user exists in the database using the email
+    const existingUser = await userModel.findOne({ email });
+
+    if (!existingUser) {
+      return next(new ErroreHandler("User not found. Please check your email.", 400));
+    }
+
+    // Update the user's password
+    existingUser.password = newpassword;
+const userId=existingUser._id
+    // Save the updated user object to the database
+    await existingUser.save();
+    await redis.set(userId as string,JSON.stringify(existingUser))
+
+    // Return a response indicating success
+    res.status(200).json({
+      success: true,
+      message: "Password has been updated successfully.",
+    });
+  } catch (err: any) {
+    return next(new ErroreHandler(err.message, 400));
+  }
+};
+
+  

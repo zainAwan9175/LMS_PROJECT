@@ -9,7 +9,7 @@ interface Props {
   setRoute?: (route: string) => void;
   refetch?: any;
 }
-
+//  this is done by metirial ui , in this part the rendering of the   login , signup ,and the varification popup done     
 const CustomModal: FC<Props> = ({
   open,
   setOpen,
