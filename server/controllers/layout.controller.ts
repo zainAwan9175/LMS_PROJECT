@@ -16,7 +16,7 @@ export const createLayout=CatchAsyncErrore(async(req:Request,res:Response,next:N
         }
         if(type==="Banner")
         {
-            const{image,title,subTitle}=req.body
+            const{image,title,subTitle}=req.body.banner
             const myCloud=await cloudinary.v2.uploader.upload(image,{
                 folder:'layout'
             })
@@ -30,7 +30,7 @@ export const createLayout=CatchAsyncErrore(async(req:Request,res:Response,next:N
                 subTitle,
             }
 
-            await LayoutModel.create(banner)
+            await LayoutModel.create({type:"Banner",banner:banner})
             
         }
         else if(type==="FAQ")
@@ -80,7 +80,7 @@ export const editLayout= CatchAsyncErrore(async (req:Request,res:Response,next:N
             const bannerData:any=await LayoutModel.findOne({type:"Banner"})
             if(bannerData)
             {
-                await cloudinary.v2.uploader.destroy(bannerData.image.public_id);
+                 await cloudinary.v2.uploader.destroy(bannerData.banner.image.public_id);
             }
             const myCloud=await cloudinary.v2.uploader.upload(image,{
                 folder:'layout'
@@ -142,6 +142,7 @@ export const editLayout= CatchAsyncErrore(async (req:Request,res:Response,next:N
 export const getLayoutById=CatchAsyncErrore(async(req:Request,res:Response,next:NextFunction)=>{
     try{
         const {type}=req.body 
+    
      const layout=await LayoutModel.findOne({type})
      res.status(200).json({
         success:true,

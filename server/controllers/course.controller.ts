@@ -1,4 +1,4 @@
-import { NextFunction,Request,Response } from "express";
+import { NextFunction,Request,response,Response } from "express";
 import { CatchAsyncErrore } from "../middleware/catchAsyncErrors";
 import ErroreHandler from "../utils/ErroreHandler";
 import cloudinary from "cloudinary"
@@ -6,6 +6,7 @@ import { createCourse ,getAllCoursesService} from "../services/course.service";
 import CourseModel from "../Models/course.model";
 import { redis } from "../utils/redis";
 import { json } from "stream/consumers";
+import axios from "axios";
 import userModel from "../Models/user.model";
 import mongoose from "mongoose";
 import notificationModel from "../Models/niootificationModel";
@@ -18,7 +19,7 @@ import sendMailer from "../utils/sendMail";
 export const uploadCourse=CatchAsyncErrore(async(req:Request,res:Response,next:NextFunction)=>{
     try{
         const data=req.body;
-        console.log(data)
+
         const thumbnail=data.thumbnail;
         const mycloud=await cloudinary.v2.uploader.upload(thumbnail,{
             folder:"courses"
@@ -37,44 +38,70 @@ export const uploadCourse=CatchAsyncErrore(async(req:Request,res:Response,next:N
     }
 
 })
-export const editCourse = CatchAsyncErrore(async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const data = req.body;
-      const courseId = req.params.id;
-  
-      // Handle thumbnail updates if a new one is provided
-      if (data.thumbnail) {
-        // Destroy the old thumbnail
-        await cloudinary.v2.uploader.destroy(data.thumbnail.public_id);
-  
-        // Upload the new thumbnail
-        const mycloud = await cloudinary.v2.uploader.upload(data.thumbnail.url, {
-          folder: "courses",
-        });
-  
-        // Update thumbnail data
-        data.thumbnail = {
-          public_id: mycloud.public_id,
-          url: mycloud.secure_url,
-        };
-      }
-  
-      // Update the course with the new data
-      const course = await CourseModel.findByIdAndUpdate(courseId, { $set: data }, { new: true });
-  
-      if (!course) {
-        return next(new ErroreHandler("Course not found", 404));
-      }
-  
-      res.status(200).json({
-        success: true,
-        course,
-      });
-    } catch (error: any) {
-      return next(new ErroreHandler(error.message, 500));
-    }
-  });
 
+
+const urlToBase64 = async (imageUrl: string): Promise<string | null> => {
+  try {
+    const response = await axios.get(imageUrl, { responseType: "arraybuffer" });
+    return `data:image/jpeg;base64,${Buffer.from(response.data).toString("base64")}`;
+  } catch (error) {
+    console.error("Error converting URL to Base64:", error);
+    return null;
+  }
+};
+
+
+
+
+
+
+export const editCourse = CatchAsyncErrore(async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const data = req.body;
+
+    const courseId = req.params.id;
+
+    // ✅ Find the course first
+    const existingCourse = await CourseModel.findById(courseId);
+    if (!existingCourse) {
+      return next(new ErroreHandler("Course not found", 404));
+    }
+
+    // ✅ Handle Thumbnail Update
+    if (data.thumbnail) {
+      if (data.thumbnail.url && data.thumbnail.url.startsWith("data:")) {
+        // 🔹 Delete old thumbnail if it exists
+        if (existingCourse.thumbnail?.public_id) {
+          await cloudinary.v2.uploader.destroy(existingCourse.thumbnail.public_id);
+        }
+
+        // 🔹 Upload new thumbnail
+        const uploadedImage = await cloudinary.v2.uploader.upload(data.thumbnail.url, { folder: "courses" });
+
+        // 🔹 Update thumbnail data
+        data.thumbnail = {
+          public_id: uploadedImage.public_id,
+          url: uploadedImage.secure_url,
+        };
+      } else {
+        console.log("Using existing thumbnail data:", data.thumbnail);
+      }
+    }
+
+    // ✅ Update Course Data
+    const updatedCourse = await CourseModel.findByIdAndUpdate(courseId, { $set: data }, { new: true });
+
+    // ✅ Return Response
+    res.status(200).json({
+      success: true,
+      message: "Course updated successfully",
+      course: updatedCourse,
+    });
+  } catch (error: any) {
+    console.error("Error updating course:", error.message);
+    return next(new ErroreHandler(error.message, 500));
+  }
+});
 
 
   //get single course  without puchasing
@@ -478,3 +505,28 @@ export const deleteCourse=CatchAsyncErrore(async(req:Request,res:Response,next:N
     return next(new ErroreHandler(err.message,400))
   }
 })
+
+
+//genrate video url
+
+export const generateVideoUrl = CatchAsyncErrore(async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { videoId } = req.body;
+
+    const response = await axios.post(
+      `https://dev.vdocipher.com/api/videos/${videoId}/otp`,
+      { ttl: 300 }, // Correct placement of body data
+      {
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: `Apisecret ${process.env.VDOCIPHER_API_SECRET}`,
+        },
+      }
+    );
+
+    res.json(response.data);
+  } catch (err: any) {
+    return next(new ErroreHandler(err.message, 400));
+  }
+});

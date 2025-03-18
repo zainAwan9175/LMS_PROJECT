@@ -47,6 +47,7 @@ export interface ICourse extends Document{
     courseData:ICourseData[];
     rating?:number;
     purchased?:number;
+    category:string
 }
 
 
@@ -92,6 +93,10 @@ const courseSchema=new Schema<ICourse>({
     name:{
         type:String,
         required:true,
+    },
+    category:{
+         type :String,
+         required:true,
     },
     description:{
         type:String,
