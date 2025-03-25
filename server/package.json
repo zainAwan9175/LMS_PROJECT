@@ -33,6 +33,7 @@
     "node-cron": "^3.0.3",
     "nodemailer": "^6.9.16",
     "nodemon": "^3.1.7",
+    "recharts": "^2.15.1",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.6.3"
   }
