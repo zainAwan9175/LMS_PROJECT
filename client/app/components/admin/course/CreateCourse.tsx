@@ -97,6 +97,7 @@ const CreateCourse = (props: Props) => {
       name: courseInfo.name,
       description: courseInfo.description,
       price: courseInfo.price,
+      category:courseInfo.category,
       estimatedPrice: courseInfo.estimatedPrice,
       tags: courseInfo.tags,
       thumbnail: courseInfo.thumbnail,

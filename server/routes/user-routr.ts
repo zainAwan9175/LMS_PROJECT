@@ -18,8 +18,8 @@ userrouter.put('/update-user-profile-picture',updateAccessToken,isAuthenticated,
 userrouter.get("/get-all-users",updateAccessToken,isAuthenticated,authorizeRole("admin"),getAllUsers)
 userrouter.put("/update-role",updateAccessToken,isAuthenticated,authorizeRole("admin"),updateUserRole)
 userrouter.delete("/delete-user/:id",updateAccessToken,isAuthenticated,authorizeRole("admin"),deleteUser)
-userrouter.post("/forgetpassword",updateAccessToken,forgetpassword)
-userrouter.post("/checkResetPasswordOtp",updateAccessToken,checkResetPasswordOtp)
-userrouter.post("/resetPassword",updateAccessToken,resetPassword)
+userrouter.post("/forgetpassword",forgetpassword)
+userrouter.post("/checkResetPasswordOtp",checkResetPasswordOtp)
+userrouter.post("/resetPassword",resetPassword)
 
 export default userrouter;

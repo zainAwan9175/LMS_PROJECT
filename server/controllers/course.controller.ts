@@ -29,6 +29,8 @@ export const uploadCourse=CatchAsyncErrore(async(req:Request,res:Response,next:N
             url:mycloud.secure_url,
 
         }
+      
+
         createCourse(data,res,next)
 
     }
@@ -58,7 +60,7 @@ const urlToBase64 = async (imageUrl: string): Promise<string | null> => {
 export const editCourse = CatchAsyncErrore(async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = req.body;
-
+    console.log(data)
     const courseId = req.params.id;
 
     // ✅ Find the course first
@@ -108,7 +110,7 @@ export const editCourse = CatchAsyncErrore(async (req: Request, res: Response, n
 
   export const getSingleCourse=CatchAsyncErrore(async(req:Request,res:Response,next:NextFunction)=>{
     try{
-
+   
       const course=await CourseModel.findById(req.params.id).select("-courseData.videoUrl -courseData.suggestion -courseData.question -courseData.links")
       res.status(200).json({
         success:true,
@@ -131,27 +133,34 @@ await redis.set(req.params.id,JSON.stringify(course),"EX",604800)
 
   export const getAllCourses=CatchAsyncErrore(async(req:Request,res:Response,next:NextFunction)=>{
     try{
-      const isCashExist=await redis.get("allCourses");
-      if(isCashExist)
-      {
-        const courses=JSON.parse(isCashExist );
-     
-        res.status(200).json({
-          success:true,
-          courses
-        })
-        }
-        else{
-          const courses=await CourseModel.find().select("-courseData.videoUrl -courseData.suggestion -courseData.question -courseData.links")
+      // const isCashExist=await redis.get("allCourses");
+      // if(isCashExist)
+      // {
+      //   const courses=JSON.parse(isCashExist );
+      //   console.log("hitting redis")
+      //   res.status(200).json({
+      //     success:true,
+      //     courses
+      //   })
+      //   }
+      //   else{
+      //     const courses=await CourseModel.find().select("-courseData.videoUrl -courseData.suggestion -courseData.question -courseData.links")
 
-          await redis.set("allCourses",JSON.stringify(courses))
-          console.log("hitting mongodb")
-          res.status(200).json({
-            success:true,
-            courses
-          })
-        }
+      //     await redis.set("allCourses",JSON.stringify(courses))
+      //     console.log("hitting mongodb")
+      //     res.status(200).json({
+      //       success:true,
+      //       courses
+      //     })
+      //   }
+      const courses=await CourseModel.find().select("-courseData.videoUrl -courseData.suggestion -courseData.question -courseData.links")
 
+      await redis.set("allCourses",JSON.stringify(courses))
+      console.log("hitting mongodb")
+      res.status(200).json({
+        success:true,
+        courses
+      })
     }
     catch(error:any)
     {
@@ -351,7 +360,7 @@ await redis.set(req.params.id,JSON.stringify(course),"EX",604800)
     try{
       const courseId = req.params.id;
       const userCourseList = req.user?.courses;
-      console.log(req.body)
+
 
  
   
@@ -441,15 +450,15 @@ export const addReplyToReview=CatchAsyncErrore(async(req:Request,res:Response,ne
     })
 
 
-    if(!isReviewExist)
+  if(!isReviewExist)
   {
     return next(new ErroreHandler("Review not found",400))
   }
  const replyData:any={
   user:req.user,
-  questioin:comment,
+  question:comment,
  }
-
+console.log(replyData)
 isReviewExist.commnetRepice?.push(replyData);
 await course.save();
 
@@ -521,12 +530,13 @@ export const generateVideoUrl = CatchAsyncErrore(async (req: Request, res: Respo
           Accept: "application/json",
           "Content-Type": "application/json",
           Authorization: `Apisecret ${process.env.VDOCIPHER_API_SECRET}`,
+    
         },
       }
     );
 
     res.json(response.data);
   } catch (err: any) {
-    return next(new ErroreHandler(err.message, 400));
+    return next(new ErroreHandler("hhhhh", 400));
   }
 });

@@ -34,7 +34,7 @@ const EditCourse: FC<Props> = ({ id }) => {
     estimatedPrice: "",
     tags: "",
     level: "",
-    categories: "",
+    category: "",
     demoUrl: "",
     thumbnail: "",
   })
@@ -90,7 +90,7 @@ const EditCourse: FC<Props> = ({ id }) => {
         estimatedPrice: editCourseData.estimatedPrice || "",
         tags: editCourseData.tags || "",
         level: editCourseData.level || "",
-        categories: editCourseData.categories || "",
+        category: editCourseData.category || "",
         demoUrl: editCourseData.demoUrl || "",
         thumbnail: editCourseData?.thumbnail?.url || "",
       })
@@ -200,7 +200,8 @@ const EditCourse: FC<Props> = ({ id }) => {
       const data = {
         name: courseInfo.name,
         description: courseInfo.description,
-        categories: courseInfo.categories,
+   
+        category: courseInfo.category,
         price: courseInfo.price,
         estimatedPrice: courseInfo.estimatedPrice,
         tags: courseInfo.tags,

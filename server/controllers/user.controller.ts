@@ -577,6 +577,9 @@ interface IResetpassword {
   
       // Create activation token
       const { token, activecode } = createForgetPasswordToken(user);
+      console.log("hi")
+      console.log(token)
+      console.log(activecode)
   
       // Prepare data for email
       const data = { user: { name: user.name }, activationCode: activecode };

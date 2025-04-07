@@ -131,30 +131,28 @@ export const authApi = apiSlice.injectEndpoints({
                 }
               },
         }),
-
-
-
         forgetpassword: builder.mutation<forgetresponse, forgetdata>({
             query: (data) => ({
-                url: "/user/forgetpassword",
-                method: "POST",
-                body: data,
-                credentials: "include" as const,
+              url: "/user/forgetpassword",
+              method: "POST",
+              body: data,
+              credentials: "include" as const,
             }),
             async onQueryStarted(arg, { queryFulfilled, dispatch }) {
-                try {
-                    const result = await queryFulfilled;
-                    dispatch(
-                        userRegistration({
-                            token: result.data.activationToken,
-                            user:result.data.user
-                        })
-                    );
-                } catch (error) {
-                    console.log(error);
-                }
+              try {
+                const result = await queryFulfilled;
+                dispatch(
+                  userRegistration({
+                    token: result.data.activationToken,
+                    user: result.data.user,
+                  })
+                );
+              } catch (error) {
+                console.log(error);
+              }
             },
-        }),
+          }),
+          
 
         checkResetPasswordOtp: builder.mutation({
             query: (data) => ({

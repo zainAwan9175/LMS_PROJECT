@@ -14,28 +14,27 @@ export const apiSlice = createApi({
         credentials: "include" as const,
       }),
     }),
-
-    loadUser:builder.query({
-      query:()=>({
-        url:"/user/me",
-        method:"GET",
-        credentials:"include" as const
-
+    loadUser: builder.query({
+      query: () => ({
+        url: "/user/me",
+        method: "GET",
+        credentials: "include" as const,
       }),
       async onQueryStarted(arg, { queryFulfilled, dispatch }) {
         try {
-            const result = await queryFulfilled;
-            dispatch(
-                userLoggedIn({
-                    accessToken: result.data.accessToken,
-                    user: result.data.user,
-                })
-            );
+          const result = await queryFulfilled;
+          dispatch(
+            userLoggedIn({
+              accessToken: result.data.accessToken,
+              user: result.data.user,
+            })
+          );
         } catch (error) {
-            console.log(error);
+          console.log(error);
         }
-    },
-    })
+      },
+    }),
+    
 
   }),
 });

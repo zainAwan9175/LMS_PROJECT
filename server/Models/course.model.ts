@@ -10,7 +10,8 @@ interface IReview extends Document{
     user:IUser,
     rating:number,
     comment:string,
-    commnetRepice:IComment[]
+    commnetRepice?:IComment[];
+ 
 }
 
 interface ILink extends Document{
@@ -21,7 +22,7 @@ interface ILink extends Document{
 interface ICourseData extends Document{
     title:string;
     description:string;
-    videoUrl:string;
+    videoUrl:string;  
 
     videoSection:string;
     videoLength:number;
@@ -60,7 +61,7 @@ const commentSchema=new Schema <IComment>({
     user:Object,
     question:String,
     questionReplies:[Object],
-})
+},{timestamps:true})
 const reviewSchema=new Schema<IReview>({
     user:Object,
     rating:{
@@ -69,7 +70,7 @@ const reviewSchema=new Schema<IReview>({
     },
     comment:String,
     commnetRepice:[commentSchema]
-})
+},{timestamps:true})
 
 
 

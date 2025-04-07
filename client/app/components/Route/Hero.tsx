@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { FC, useState } from "react";
 import { BiSearch } from "react-icons/bi";
 import Loader from "../Loader/Loader";
+import { useGetHeroDataQuery } from "@/redux/features/layout/layoutApi";
 
 import Client1 from "../../../public/assests/client-1.jpg";
 import Client2 from "../../../public/assests/client-2.jpg";
@@ -32,9 +33,9 @@ const Hero: FC<Props> = (props) => {
 
 
 
-//   const { data, isLoading } = useGetHeroDataQuery("Banner", {
-//     refetchOnMountOrArgChange: true,
-//   });
+  const { data, isLoading } = useGetHeroDataQuery("Banner", {
+    refetchOnMountOrArgChange: true,
+  });
 
 
 
@@ -63,7 +64,7 @@ const Hero: FC<Props> = (props) => {
             <Image
               src={
            
-                require("../../../public/assests/hero-banner-1.png")
+                data?.layout?.banner?.image?.url
               }
               width={400}
               height={400}
@@ -76,12 +77,12 @@ const Hero: FC<Props> = (props) => {
             {/* Main headline */}
             <h1 className="text-3xl lg:text-5xl font-bold text-gray-800 dark:text-white mb-4 leading-tight">
               {
-                "Improve Your Online Learning Experience"}
+                data?.layout?.banner?.title}
             </h1>
             {/* Subtitle or description */}
             <p className="text-lg text-gray-600 dark:text-gray-300 mb-8 max-w-lg">
               {
-                "We have 20K+ Online courses & 500k+ Online registered students. Find your desired courses from them."}
+             data?.layout?.banner?.subTitle}
             </p>
             {/* Search form */}
             <form onSubmit={handleSearch} className="w-full max-w-md mb-8">

@@ -11,14 +11,14 @@ export const ordersApi = apiSlice.injectEndpoints({
     }),
     getStripePublishablekey: builder.query({
       query: () => ({
-        url: `payment/stripepublishablekey`,
+        url: `/order/payment/stipepublishablekey`,
         method: "GET",
         credentials: "include" as const,
       }),
     }),
     createPaymentIntent: builder.mutation({
       query: (amount) => ({
-        url: "payment",
+        url: "/order/payment",
         method: "POST",
         body: {
           amount,
@@ -28,7 +28,7 @@ export const ordersApi = apiSlice.injectEndpoints({
     }),
     createOrder: builder.mutation({
       query: ({ courseId, payment_info }) => ({
-        url: "create-order",
+        url: "/order/create-order",
         body: {
           courseId,
           payment_info,
@@ -37,6 +37,8 @@ export const ordersApi = apiSlice.injectEndpoints({
         credentials: "include" as const,
       }),
     }),
+
+
   }),
 });
 
