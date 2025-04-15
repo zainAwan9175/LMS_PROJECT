@@ -3,7 +3,9 @@ import dotenv from "dotenv";
 import {v2 as cloudinary} from "cloudinary"
 import cors from "cors";
 import mongodbconnection from "./utils/db";
-
+import {initSocketServe} from "./socketServer"
+import http from "http"
+const server=http.createServer(app)
 dotenv.config();
 cloudinary.config({
     cloud_name:process.env.CLOUD_NAME,
@@ -13,9 +15,9 @@ cloudinary.config({
 
 
 
+initSocketServe(server);
 
-
-app.listen(process.env.PORT,()=>{
+server.listen(process.env.PORT,()=>{
     console.log(`server is running on the port ${process.env.PORT}`)
     mongodbconnection();
 

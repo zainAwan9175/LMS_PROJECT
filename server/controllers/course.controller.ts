@@ -162,6 +162,7 @@ await redis.set(req.params.id,JSON.stringify(course),"EX",604800)
         courses
       })
     }
+    
     catch(error:any)
     {
       return next(new ErroreHandler(error.message, 500));
@@ -332,6 +333,12 @@ await redis.set(req.params.id,JSON.stringify(course),"EX",604800)
             return next(new ErroreHandler(error.message, 400));
           }
         }
+      
+          await notificationModel.create({
+            user:req.user?._id,
+            title:'New Question Reply Recieve',
+            message:`You have a new Question reply in ${content?.title}`
+        })
   
         res.status(200).json({
           success: true,

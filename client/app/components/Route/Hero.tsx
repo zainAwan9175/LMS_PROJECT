@@ -52,9 +52,9 @@ const Hero: FC<Props> = (props) => {
   return (
     <>
       {/* Render loader while data is being fetched */}
-      {/* {isLoading ? (
+      {isLoading ? (
         <Loader />
-      ) : ( */}
+      ) : (
 
         <div className="w-full min-h-screen flex flex-col lg:flex-row items-center justify-center lg:justify-between px-4 lg:px-8 py-10 lg:py-0 relative overflow-hidden">
           {/* Animated background circle */}
@@ -126,7 +126,7 @@ const Hero: FC<Props> = (props) => {
             </div>
           </div>
         </div>
-      {/* )} */}
+       )} 
     </>
   );
 };

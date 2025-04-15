@@ -5,7 +5,7 @@ import { uploadCourse ,editCourse,getSingleCourse,getAllCourses,getCourseByUser,
 const courseRouter=express.Router();
 courseRouter.post("/create-course",updateAccessToken,isAuthenticated,authorizeRole("admin"),uploadCourse)
 courseRouter.put("/edit-course/:id",updateAccessToken,isAuthenticated,authorizeRole("admin"),editCourse)
-courseRouter.get("/get-course/:id",updateAccessToken,getSingleCourse)
+courseRouter.get("/get-course/:id",getSingleCourse)
 courseRouter.get("/get-allCourses",getAllCourses)
 courseRouter.get("/get-course-content/:id",updateAccessToken,isAuthenticated,getCourseByUser)
 courseRouter.put("/add-question",updateAccessToken,isAuthenticated,addQuestion)

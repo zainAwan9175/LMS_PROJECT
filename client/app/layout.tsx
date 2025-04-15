@@ -4,9 +4,12 @@ import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import { SessionProvider } from "next-auth/react";
 import { Providers } from "./Provider";
-import React from "react";
+import React, { useEffect } from "react";
 import { Toaster } from "react-hot-toast";
 import Loader from "./components/Loader/Loader";
+import socketIO from "socket.io-client"
+const ENDPOINT=process.env.NEXT_PUBLIC_SOCKET_SERVER_URI||"";
+const socketId=socketIO(ENDPOINT,{transports:["websocket"]})
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -46,9 +49,10 @@ export default function RootLayout({
 
 
 const Custom: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isLoading, data, error } = useLoadUserQuery({});
-
-  console.log({ isLoading, data, error });
+  const { isLoading } = useLoadUserQuery({});
+  useEffect(()=>{
+    socketId.on("connection",()=>{})
+  },[])
 
   return (
     <>
